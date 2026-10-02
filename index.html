@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broker Book</title>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('bb-theme')||'sleek'}catch(e){}</script>
+<style>
+:root{--bg:#f3f1ec;--card:#fff;--ink:#1d2b2a;--mute:#6b7775;--line:#dcd8cf;--pri:#0f5c52;--pri2:#e6f0ee;--warn:#b4531a;--red:#a8323a;--grn:#1f7a45;--onpri:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#141a19;--card:#1e2625;--ink:#e8eeed;--mute:#93a19e;--line:#33403e;--pri:#4fb3a3;--pri2:#223533;--warn:#e08a4c;--red:#e0707a;--grn:#5cc98a}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-top:env(safe-area-inset-top,0px)}
+header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 12px}
+header h1{font-size:18px;margin:0;flex:1;font-weight:600}
+#burger{background:none;border:0;color:#fff;font-size:26px;line-height:1;padding:2px 6px}
+#status{font-size:12px;background:rgba(255,255,255,.18);padding:6px 11px;border-radius:99px;border:0;color:#fff}
+#drawer{position:fixed;inset:0 auto 0 0;width:250px;max-width:80%;background:var(--card);z-index:20;transform:translateX(-100%);transition:transform .2s;padding:16px 0;box-shadow:2px 0 14px rgba(0,0,0,.25);padding-top:calc(16px + env(safe-area-inset-top,0px))}
+#drawer.open{transform:none}
+#shade{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:15;display:none}
+#shade.open{display:block}
+#drawer h2{margin:0 18px 12px;font-size:17px}
+#drawer button{display:flex;justify-content:space-between;width:100%;text-align:left;background:none;border:0;color:var(--ink);font-size:16px;padding:14px 18px;border-left:4px solid transparent}
+#drawer button.on{background:var(--pri2);border-left-color:var(--pri);font-weight:600}
+main{padding:12px 12px 90px;max-width:640px;margin:auto}
+.page{display:none}.page.on{display:block}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+html{overflow-x:hidden}
+#home,#fab,#top{transform:translateZ(0);will-change:transform}
+#toast{max-width:90vw;text-align:center}
+.btn{background:var(--pri);color:var(--onpri);border:0;border-radius:8px;padding:13px 16px;font:inherit;font-weight:600}
+.btn.alt{background:var(--pri2);color:var(--pri)}
+.btn.sm{padding:7px 11px;font-size:14px;font-weight:500}
+.btn.red{background:none;color:var(--red);border:1px solid var(--red)}
+.save{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);display:flex;gap:8px;z-index:4}
+.save .btn{flex:1}
+.pics{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pics div{position:relative;width:78px;height:78px}
+.pics img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.pics b{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.card h3{margin:0;font-size:17px}
+.card .meta{color:var(--mute);font-size:14px;margin:2px 0 6px}
+.price{font-weight:700;color:var(--pri);margin:4px 0}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;border:0}
+.tag.Available{background:#dcf3e5;color:var(--grn)}.tag.Sold,.tag.Rented{background:#f6dcdf;color:var(--red)}
+@media(prefers-color-scheme:dark){.tag.Available{background:#1f3b2d}.tag.Sold,.tag.Rented{background:#40242a}}
+.kv{font-size:14px;margin:2px 0}.kv span{color:var(--mute)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.thumbs{display:flex;gap:6px;overflow-x:auto;margin:8px 0}
+.thumbs img{height:84px;border-radius:8px;flex:none}
+.empty{text-align:center;color:var(--mute);padding:40px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{display:flex;align-items:center;gap:6px;background:var(--pri2);color:var(--pri);padding:6px 6px 6px 12px;border-radius:99px;font-size:14px}
+.chip button{border:0;background:none;color:var(--red);font-size:18px;line-height:1;padding:0 6px}
+.note{font-size:13px;color:var(--mute);margin:6px 0}
+#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:30;display:none;font-size:14px}
+#lb{position:fixed;inset:0;background:#000;z-index:40;display:none;flex-direction:column;color:#fff}
+#lbBar{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font-size:14px}
+#lbX{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:50%;width:38px;height:38px;font-size:18px}
+#lbTrack{flex:1;min-height:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+#lbTrack::-webkit-scrollbar{display:none}
+#lbTrack .slide{flex:0 0 100%;height:100%;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;scroll-snap-stop:always}
+#lbTrack img{max-width:100%;max-height:100%;object-fit:contain}
+.lbA{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:50%;width:40px;height:40px;font-size:24px;line-height:1}
+#lbFoot{padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center}
+#lbCap{flex:1;font-size:13px;opacity:.9}
+html[data-theme^=sleek]{--red:#e5484d}
+html[data-theme=sleek]{--bg:#f5f6fa;--card:#fff;--ink:#14171f;--mute:#7a8194;--line:#e8eaf1;--pri:#3b5bfd;--pri2:#eef1ff;--grn:#12a05c;--hbg:rgba(255,255,255,.88);--tagA:#e3f6ec;--tagS:#fdeaea;color-scheme:light}
+html[data-theme=sleekdark]{--bg:#0e1015;--card:#171a22;--ink:#eceef5;--mute:#8b93a7;--line:#262b38;--pri:#7c93ff;--pri2:#1f2538;--grn:#4cd08a;--hbg:rgba(23,26,34,.88);--tagA:#173a2a;--tagS:#3d1f24;--onpri:#0e1015;color-scheme:dark}
+html[data-theme^=sleek] header{background:var(--hbg);backdrop-filter:blur(10px);color:var(--ink);border-bottom:1px solid var(--line)}
+html[data-theme^=sleek] #burger{color:var(--ink)}
+html[data-theme^=sleek] #status{background:var(--pri2);color:var(--pri)}
+html[data-theme^=sleek] .card{border:0;border-radius:16px;box-shadow:0 1px 2px rgba(20,23,31,.04),0 8px 24px rgba(20,23,31,.06)}
+html[data-theme=sleekdark] .card{box-shadow:0 0 0 1px var(--line)}
+html[data-theme^=sleek] input,html[data-theme^=sleek] select,html[data-theme^=sleek] textarea{border-radius:12px}
+html[data-theme^=sleek] .btn{border-radius:12px}
+html[data-theme^=sleek] .tag.Available{background:var(--tagA);color:var(--grn)}
+html[data-theme^=sleek] .tag.Sold,html[data-theme^=sleek] .tag.Rented{background:var(--tagS);color:var(--red)}
+html[data-theme^=sleek] #drawer{border-radius:0 20px 20px 0}
+html[data-theme^=sleek] .save{background:var(--hbg);backdrop-filter:blur(10px)}
+#fab{position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--pri);color:var(--onpri);font-size:32px;line-height:1;display:none;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:6}
+#home{position:fixed;left:18px;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--pri);display:none;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:6}
+#home.up{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--card);color:var(--ink);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow:auto;width:100%;max-width:640px}
+.sheet h3{margin:0 0 4px}
+
+.card{overflow:hidden;scroll-margin-top:64px}
+.card.flash{outline:3px solid var(--pri);outline-offset:-3px}
+.cover{position:relative;margin:-12px -12px 10px}
+.car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.car::-webkit-scrollbar{display:none}
+.car img{flex:0 0 100%;width:100%;height:190px;object-fit:cover;scroll-snap-align:center;scroll-snap-stop:always}
+.cnt{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:2px 8px;border-radius:99px;pointer-events:none}
+.dist{display:inline-block;background:var(--pri2);color:var(--pri);font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px}
+.zebra #listOut .card:nth-child(even),.zebra #custOut .card:nth-child(even){background-image:linear-gradient(rgba(var(--zc,59,91,253),.14),rgba(var(--zc,59,91,253),.14))}
+.fpanel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:2px 12px 12px;margin:8px 0}
+.chip.sel{background:var(--pri);color:var(--onpri)}
+button.chip{border:0;font:inherit;font-size:14px;padding:6px 12px}
+.pics .cv{position:absolute;left:3px;bottom:3px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:1px 6px;border-radius:99px}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.gal div{position:relative;aspect-ratio:1}
+.gal img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block}
+.gal i{position:absolute;left:4px;right:4px;bottom:3px;font-style:normal;font-size:11px;color:#fff;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#top{position:fixed;right:23px;bottom:calc(92px + env(safe-area-inset-bottom,0px));width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--pri);font-size:22px;display:none;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.22);z-index:6}
+textarea{resize:vertical}
+</style>
+</head>
+<body>
+<header>
+  <button id="burger" aria-label="Menu">☰</button>
+  <h1 id="title">New entry</h1>
+  <button id="status" aria-label="Sync status">…</button>
+</header>
+<div id="shade"></div>
+<nav id="drawer">
+  <h2>Broker Book</h2>
+  <div id="menu"></div>
+</nav>
+
+<main>
+<section class="page" id="p-add">
+  <form id="f" onsubmit="return false">
+    <label>Mobile number</label><input id="mobile" type="tel" inputmode="tel">
+    <label>Name</label><input id="name">
+    <div class="row">
+      <div><label>Rent / Sale</label><select id="deal"><option>Rent</option><option>Sale</option></select></div>
+      <div><label>Flat type</label><select id="ftype"></select></div>
+    </div>
+    <div id="rentBox" class="row">
+      <div><label>Monthly rent (₹)</label><input id="rent" type="number" inputmode="numeric"></div>
+      <div><label>Deposit (₹)</label><input id="deposit" type="number" inputmode="numeric"></div>
+    </div>
+    <div id="saleBox" hidden><label>Sale price (₹)</label><input id="price" type="number" inputmode="numeric">
+      <div class="row"><div><label>Carpet area (sq ft)</label><input id="carpet" type="number" inputmode="decimal"></div><div><label>Built-up area (sq ft)</label><input id="builtup" type="number" inputmode="decimal"></div></div></div>
+    <div class="row">
+      <div><label>Location</label><input id="area"></div>
+      <div><label>Apartment name</label><input id="apt"></div>
+    </div>
+    <label>Amenities</label>
+    <select id="amSel"></select>
+    <div class="chips" id="amChips"></div>
+    <div class="row"><input id="amNew" placeholder="New amenity, e.g. Rooftop"><button type="button" class="btn alt" id="amAdd" style="flex:0 0 auto">Add</button></div>
+    <label>Google Maps link</label>
+    <div class="row"><input id="map" type="url" placeholder="Paste link or use location"><button type="button" class="btn alt" id="locBtn" style="flex:0 0 auto">Use my location</button></div>
+    <div class="note" id="mapNote"></div>
+    <label>Photos</label>
+    <div class="row">
+      <button type="button" class="btn alt" id="camBtn">Take photo</button>
+      <button type="button" class="btn alt" id="galBtn">Upload</button>
+    </div>
+    <input id="cam" type="file" accept="image/*" capture="environment" hidden>
+    <input id="gal" type="file" accept="image/*" multiple hidden>
+    <div class="pics" id="pics"></div>
+    <div class="note">Tap ☆ on a photo to make it the cover.</div>
+    <label>Status</label>
+    <select id="status2"><option>Available</option><option>Sold</option><option>Rented</option></select>
+    <div id="customBox"></div>
+  </form>
+  <div class="save">
+    <button class="btn alt" id="clearBtn" style="flex:0 0 auto">Clear</button>
+    <button class="btn" id="saveBtn">Save</button>
+  </div>
+</section>
+
+<section class="page" id="p-list">
+  <input id="q" type="search" placeholder="Search… try: 2bhk rent under 15k, baner, sale 75L">
+  <div class="row" style="margin:8px 0"><button class="btn alt sm" id="fToggle" style="flex:0 0 auto">Filters ▾</button>
+    <select id="sort"><option value="new">Sort: Newest</option><option value="near">Sort: Nearest</option><option value="plow">Sort: Price low to high</option><option value="phigh">Sort: Price high to low</option></select></div>
+  <div class="fpanel" id="fPanel" hidden>
+    <label>Rent or sale</label><div class="chips" id="fDeal" style="margin:0"></div>
+    <label>Flat type</label><div class="chips" id="fType" style="margin:0"></div>
+    <label>Budget (₹) — type 10k, 75L, 1.5cr</label>
+    <div class="row"><input id="bMin" placeholder="Min" inputmode="text"><input id="bMax" placeholder="Max" inputmode="text"></div>
+    <div class="chips" id="fBud"></div>
+    <label>Near</label>
+    <select id="nearSel"></select>
+    <div id="nearBox" hidden style="margin-top:8px"><div class="row"><input id="nearQ" placeholder="Place name or Google Maps link"><button type="button" class="btn" id="nearGo" style="flex:0 0 auto">Find</button></div></div>
+    <div id="radBox" hidden><label>Within</label><div class="chips" id="fRad" style="margin:0"></div></div>
+    <div style="margin-top:12px"><button class="btn red sm" data-clear="1">Clear search &amp; filters</button></div>
+  </div>
+  <div class="chips" id="filters"></div>
+  <div class="note" id="hint"></div>
+  <div id="listOut"></div>
+</section>
+
+<section class="page" id="p-gal">
+  <div class="chips" id="galBar"></div>
+  <div id="galOut"></div>
+</section>
+
+
+<section class="page" id="p-cust">
+  <input id="cq" type="search" placeholder="Search customers…">
+  <div id="custOut" style="margin-top:12px"></div>
+</section>
+
+<section class="page" id="p-fu"><div id="fuOut"></div></section>
+
+<section class="page" id="p-settings">
+  <h3>Custom fields</h3>
+  <p class="note">Fields you add here show up on every new entry (reference, alias, floor, anything).</p>
+  <div class="row"><input id="newField" placeholder="Field name, e.g. Ref"><button class="btn" id="addField" style="flex:0 0 auto">Add</button></div>
+  <div class="chips" id="fieldChips"></div>
+
+  <h3>Flat types</h3>
+  <div class="row"><input id="newType" placeholder="e.g. 3 BHK, Shop, Plot"><button class="btn" id="addType" style="flex:0 0 auto">Add</button></div>
+  <div class="chips" id="typeChips"></div>
+
+  <h3>Menu order</h3>
+  <p class="note">Move items up or down. Saved entries opens first on reload.</p>
+  <div id="menuList"></div>
+  <h3>Amenities</h3>
+  <p class="note">Choices in the amenity dropdown. Add new ones while filling an entry.</p>
+  <div class="chips" id="amListChips"></div>
+
+  <h3>Default theme</h3>
+  <p class="note">Used every time the app opens.</p>
+  <select id="theme"><option value="light">Sleek light</option><option value="dark">Sleek dark</option><option value="auto">Auto (follows phone)</option></select>
+
+  <h3>My location</h3>
+  <p class="note">Distances on saved entries are measured from here (straight-line).</p>
+  <div class="note" id="homeNow"></div>
+  <button class="btn alt" id="homeGps">Use my current location</button>
+  <label>Or paste a Google Maps link / coordinates</label>
+  <div class="row"><input id="homeIn" placeholder="Map link or 18.62, 73.80"><button class="btn" id="homeSet" style="flex:0 0 auto">Set</button></div>
+  <label style="display:flex;gap:10px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="liveGps" style="width:auto"> Use live GPS instead of the saved location</label>
+
+  <h3>Card colours</h3>
+  <label style="display:flex;gap:10px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="zebra" style="width:auto"> Alternate card colours in lists</label>
+  <select id="zcol" style="margin-top:8px"><option value="blue">Blue tint</option><option value="teal">Teal tint</option><option value="amber">Amber tint</option><option value="rose">Rose tint</option><option value="violet">Violet tint</option></select>
+
+  <h3>WhatsApp message</h3>
+  <p class="note">Used by the Share button on each entry. You can still edit the text before sending.</p>
+  <label>City added after the location</label><input id="shCity">
+  <label>Tagline</label><input id="shTag">
+  <label>Extra points (one per line)</label><textarea id="shExtra" rows="3"></textarea>
+  <label>Contact shown in the message</label>
+  <select id="shWho"><option value="entry">Name &amp; mobile of the entry</option><option value="mine">My own name &amp; mobile</option></select>
+  <div class="row" id="shMine" style="margin-top:8px"><input id="shName" placeholder="Your name"><input id="shMob" type="tel" placeholder="Your mobile"></div>
+  <label style="display:flex;gap:10px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="shPrice" style="width:auto"> Include rent / price line</label>
+
+  <h3>Full backup (with photos)</h3>
+  <p class="note">One file with all entries, customers, follow-ups and photos. Keep a copy before uninstalling or changing phones.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="bkNow">Back up everything</button><button class="btn alt" id="bkRestore">Restore backup</button><input type="file" id="bkFile" accept=".json,application/json" hidden></div>
+
+  <h3>Where your data is</h3>
+  <div class="note" id="where"></div>
+
+  <h3>Excel</h3>
+  <p class="note" id="xlInfo"></p>
+  <label style="display:flex;gap:10px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="auto" style="width:auto"> Update the Excel file after every save</label>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="xlNow">Save Excel now</button><button class="btn alt" id="xlRestore">Restore from Excel</button><input type="file" id="xlFile" accept=".xlsx,.xls" hidden></div>
+  <p class="note">Restore adds missing entries and updates ones with the same ID. Photos are not in the Excel file, so they are not restored.</p>
+</section>
+</main>
+
+<button id="home" aria-label="Saved entries"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button>
+<button id="fab" aria-label="New entry">+</button>
+<button id="top" aria-label="Go to top">↑</button>
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+<div id="lb"><div id="lbBar"><span id="lbCnt"></span><button id="lbX" aria-label="Close">✕</button></div><div id="lbTrack"></div><button class="lbA" id="lbPrev" style="left:6px" aria-label="Previous">‹</button><button class="lbA" id="lbNext" style="right:6px" aria-label="Next">›</button><div id="lbFoot"><div id="lbCap"></div><button class="btn" id="lbGo">Open property</button></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const isNative=()=>!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const DEF_TYPES=['1 RK','1 BHK','2 BHK','3 BHK','4 BHK'];
+const DEF_SHARE={city:'Pune',tag:'✨ Spacious • Well-Maintained • Great Location',extra:'Electricity Charges Separate\nSuitable for Family / Working Professionals',who:'entry',myName:'',myMob:'',price:true};
+let db,entries=[],cfg={fields:[],types:DEF_TYPES.slice(),auto:isNative(),lastExport:null,menu:['add','list','gal','cust','fu','settings'],amenities:['CCTV','Lift','Parking','Security guard','Power backup','Gym','Swimming pool','Garden','Club house','Intercom','Fire safety','Play area'],theme:'light',home:null,live:false,zebra:false,zcol:'blue',share:{...DEF_SHARE}},pics=[],amen=[],editId=null,filter='All';
+
+/* ---------- storage (IndexedDB: survives closing the browser) ---------- */
+function open(){return new Promise((res,rej)=>{const r=indexedDB.open('brokerbook',2);
+ r.onupgradeneeded=()=>{const d=r.result;[['entries','id'],['customers','id'],['interests','id'],['cfg']].forEach(([n,k])=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,k?{keyPath:k}:undefined)})};
+ r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+const tx=(s,m='readonly')=>db.transaction(s,m).objectStore(s);
+const p=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const saveCfg=()=>p(tx('cfg','readwrite').put(cfg,'cfg'));
+
+/* ---------- helpers ---------- */
+function toast(t,ms){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',ms||2200)}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inr=n=>n===''||n==null?'':'₹'+Number(n).toLocaleString('en-IN');
+function priceLine(e){return e.deal==='Rent'?`${inr(e.rent)}/month · Deposit ${inr(e.deposit)}`:inr(e.price)}
+
+/* ---------- navigation ---------- */
+const titles={add:'New entry',list:'Saved entries',gal:'Gallery',cust:'Customers',fu:'Follow-ups',settings:'Settings'};
+function go(pg){
+ if(pg!=='add')editId=null;
+ cur=pg;
+ document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+pg));
+ document.querySelectorAll('#drawer button').forEach(b=>b.classList.toggle('on',b.dataset.p===pg));
+ $('title').textContent=pg==='add'&&editId?'Edit entry':titles[pg];
+ $('drawer').classList.remove('open');$('shade').classList.remove('open');
+ $('fab').style.display=(pg==='list'||pg==='cust')?'flex':'none';$('home').style.display=pg==='list'?'none':'flex';$('home').classList.toggle('up',pg==='add');
+ if(pg==='list'){renderFPanel();renderList()}if(pg==='gal')renderGal();if(pg==='cust')renderCust();if(pg==='fu')renderFu();if(pg==='settings')renderSettings();
+ window.scrollTo(0,0);sync();
+}
+$('home').onclick=()=>go('list');
+$('fab').onclick=()=>{if(cur==='cust')openCust();else{resetForm();go('add')}};
+$('burger').onclick=()=>openDrawer();
+$('shade').onclick=()=>closeDrawer();
+function renderMenu(){const c=document.querySelector('.page.on'),pg=c?c.id.slice(2):'';
+ $('menu').innerHTML=cfg.menu.map(k=>`<button data-p="${k}" class="${k===pg?'on':''}">${titles[k]}${k==='list'?` <span>${entries.length}</span>`:k==='fu'&&dueN()?` <span style="color:var(--red)">${dueN()}</span>`:''}</button>`).join('')}
+$('menu').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.p;if(k==='add'&&!editId)resetForm();go(k)};
+
+/* ---------- form ---------- */
+function fillTypes(sel){const s=$('ftype');s.innerHTML=cfg.types.map(t=>`<option>${esc(t)}</option>`).join('');if(sel&&!cfg.types.includes(sel))s.insertAdjacentHTML('beforeend',`<option>${esc(sel)}</option>`);if(sel)s.value=sel}
+function fillCustom(vals={}){$('customBox').innerHTML=cfg.fields.map((f,i)=>`<label>${esc(f)}</label><input data-cf="${esc(f)}" value="${esc(vals[f]||'')}">`).join('')}
+function toggleDeal(){const r=$('deal').value==='Rent';$('rentBox').hidden=!r;$('saleBox').hidden=r;
+ const st=$('status2');st.innerHTML=`<option>Available</option><option>${r?'Rented':'Sold'}</option>`}
+$('deal').onchange=toggleDeal;
+function resetForm(){editId=null;pics=[];amen=[];$('f').reset();toggleDeal();fillTypes();fillCustom();renderPics();renderAm();mapNote()}
+function renderAm(){
+ $('amSel').innerHTML='<option value="">Add an amenity…</option>'+cfg.amenities.filter(a=>!amen.includes(a)).map(a=>`<option>${esc(a)}</option>`).join('');
+ $('amChips').innerHTML=amen.map((a,i)=>`<span class="chip">${esc(a)}<button type="button" data-am="${i}" aria-label="Remove">×</button></span>`).join('');
+}
+$('amSel').onchange=()=>{if($('amSel').value){amen.push($('amSel').value);renderAm()}};
+$('amChips').onclick=e=>{if(e.target.dataset.am!=null){amen.splice(+e.target.dataset.am,1);renderAm()}};
+$('amAdd').onclick=async()=>{const v=$('amNew').value.trim();if(!v)return;
+ if(!cfg.amenities.includes(v)){cfg.amenities.push(v);await saveCfg()}
+ if(!amen.includes(v))amen.push(v);$('amNew').value='';renderAm()};
+$('clearBtn').onclick=()=>{resetForm();go('add')};
+function renderPics(){$('pics').innerHTML=pics.map((s,i)=>`<div><img src="${s}" alt=""><b data-i="${i}">×</b><span class="cv" data-c="${i}">${i?'☆ Cover':'★ Cover'}</span></div>`).join('')}
+$('pics').onclick=e=>{if(e.target.dataset.i!=null){pics.splice(+e.target.dataset.i,1);renderPics()}
+ if(e.target.dataset.c!=null&&+e.target.dataset.c>0){pics.unshift(...pics.splice(+e.target.dataset.c,1));renderPics();toast('Cover photo set')}}
+$('camBtn').onclick=()=>$('cam').click();$('galBtn').onclick=()=>$('gal').click();
+function shrink(file){return new Promise(res=>{const im=new Image(),u=URL.createObjectURL(file);
+ im.onload=()=>{const m=900,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');
+  c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.72))};
+ im.onerror=()=>res(null);im.src=u})}
+async function addFiles(inp){for(const f of inp.files){const d=await shrink(f);if(d)pics.push(d)}inp.value='';renderPics()}
+$('cam').onchange=()=>addFiles($('cam'));$('gal').onchange=()=>addFiles($('gal'));
+
+$('saveBtn').onclick=async()=>{
+ const mobile=$('mobile').value.trim(),name=$('name').value.trim();
+ if(!mobile&&!name){toast('Enter a name or mobile number');return}
+ const custom={};document.querySelectorAll('[data-cf]').forEach(i=>custom[i.dataset.cf]=i.value.trim());
+ const old=entries.find(x=>x.id===editId);
+ const e={id:editId||('e'+Date.now()),created:old?old.created:Date.now(),updated:Date.now(),
+  mobile,name,deal:$('deal').value,ftype:$('ftype').value,rent:$('rent').value,deposit:$('deposit').value,price:$('price').value,
+  area:$('area').value.trim(),apt:$('apt').value.trim(),map:$('map').value.trim(),status:$('status2').value,custom,pics:pics.slice(),carpet:$('carpet').value,builtup:$('builtup').value,amen:amen.slice(),folder:old&&old.folder};
+ if(e.deal==='Rent'){e.price='';e.carpet='';e.builtup=''}else{e.rent='';e.deposit=''}
+ {const ll=parseLL(e.map);e.lat=ll?ll.lat:null;e.lng=ll?ll.lng:null;if(!ll&&old&&old.map===e.map&&old.lat!=null){e.lat=old.lat;e.lng=old.lng}}
+ if(isNative()&&e.pics.length&&!e.folder)e.folder=folderFor(e);
+ try{await p(tx('entries','readwrite').put(e))}catch(x){toast('Could not save: '+x.message);return}
+ await load();toast('Saved');resolveMaps();if(isNative())savePhotos(e,old?old.pics.length:0);resetForm();updateStatus();
+ if(cfg.auto)exportXlsx(true);
+ go('list');
+};
+
+/* ---------- list / search ---------- */
+async function load(){entries=(await p(tx('entries').getAll())).sort((a,b)=>b.updated-a.updated);
+ customers=(await p(tx('customers').getAll())).sort((a,b)=>b.created-a.created);interests=await p(tx('interests').getAll());renderMenu()}
+function card(e){
+ const cf=Object.entries(e.custom||{}).filter(([k,v])=>v).map(([k,v])=>`<div class="kv"><span>${esc(k)}:</span> ${esc(v)}</div>`).join('');
+ const wa=(e.mobile||'').replace(/\D/g,''),n=interests.filter(i=>i.eid===e.id).length;
+ return `<div class="card" data-id="${e.id}">
+ ${e.pics.length?`<div class="cover"><div class="car">${e.pics.map((s,i)=>`<img src="${s}" data-a="zoom" data-n="${i}" alt="">`).join('')}</div>${e.pics.length>1?`<span class="cnt">1/${e.pics.length}</span>`:''}</div>`:''}
+ <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+  <div><h3>${esc(e.name||'(no name)')}</h3><div class="meta">${esc(e.mobile)}</div></div>
+  <button class="tag ${e.status}" data-a="tog">${e.status}</button></div>
+ <div class="kv"><b>${esc(e.deal)}</b> · ${esc(e.ftype)}</div>
+ <div class="price">${priceLine(e)}</div>
+ ${e.apt||e.area?`<div class="kv">${esc([e.apt,e.area].filter(Boolean).join(', '))}</div>`:''}
+ ${distLine(e)}
+ ${e.deal==='Sale'&&(e.carpet||e.builtup)?`<div class="kv">${[e.carpet?'Carpet '+esc(e.carpet)+' sq ft':'',e.builtup?'Built-up '+esc(e.builtup)+' sq ft':''].filter(Boolean).join(' · ')}</div>`:''}
+ ${e.amen&&e.amen.length?`<div class="kv"><span>Amenities:</span> ${e.amen.map(esc).join(', ')}</div>`:''}
+  ${cf}${intLine(e)}
+ 
+ <div class="acts">
+  ${e.mobile?`<a class="btn sm" href="tel:${esc(e.mobile)}">Call</a>`:''}
+  ${wa?`<a class="btn sm alt" href="https://wa.me/${wa.length===10?'91'+wa:wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+  ${e.map?`<a class="btn sm alt" href="${esc(e.map)}" target="_blank" rel="noopener">Map</a>`:''}
+  <button class="btn sm alt" data-a="lead">Interested${n?` (${n})`:''}</button>
+  <button class="btn sm alt" data-a="share">Share</button>
+  <button class="btn sm alt" data-a="edit">Edit</button>
+  <button class="btn sm red" data-a="del">Delete</button>
+ </div></div>`}
+function bindCards(box){box.onclick=async ev=>{
+ const a=ev.target.dataset.a;if(!a)return;const c=ev.target.closest('.card'),e=c&&entries.find(x=>x.id===c.dataset.id);
+ if(a==='lead')return openLink({eid:e.id});
+ if(a==='zoom')return openLb(e.pics.map(s=>({src:s,eid:e.id})),+ev.target.dataset.n||0,false);
+ if(a==='share')return openShare(e);
+ if(a==='tog'){e.status=e.status==='Available'?(e.deal==='Rent'?'Rented':'Sold'):'Available';e.updated=Date.now();await p(tx('entries','readwrite').put(e));await load();refresh();updateStatus();if(cfg.auto)exportXlsx(true)}
+ if(a==='del'&&confirm('Delete this entry?')){await p(tx('entries','readwrite').delete(e.id));for(const i of interests.filter(x=>x.eid===e.id)){await p(tx('interests','readwrite').delete(i.id));sched({...i,next:''})}if(isNative()&&e.folder)nativeRm('BrokerBook/photos/'+e.folder,true);await load();refresh();updateStatus();if(cfg.auto)exportXlsx(true)}
+ if(a==='edit'){editId=e.id;pics=e.pics.slice();
+  $('mobile').value=e.mobile;$('name').value=e.name;$('deal').value=e.deal;toggleDeal();fillTypes(e.ftype);
+  $('rent').value=e.rent;$('deposit').value=e.deposit;$('price').value=e.price;$('area').value=e.area;$('apt').value=e.apt;$('map').value=e.map;
+  $('status2').value=e.status;fillCustom(e.custom);amen=(e.amen||[]).slice();renderAm();$('carpet').value=e.carpet||'';$('builtup').value=e.builtup||'';
+  // keep values of custom fields that were later removed from settings
+  renderPics();mapNote();go('add')}
+}}
+function refresh(){renderList();renderCust();renderFu()}
+const hay=e=>[e.mobile,e.name,e.deal,e.ftype,e.rent,e.deposit,e.price,e.area,e.apt,e.status,e.carpet,e.builtup,...(e.amen||[]),...Object.entries(e.custom||{}).flat()].join(' ').toLowerCase();
+function renderList(){
+ const sts=['All','Available','Sold','Rented'];
+ $('filters').innerHTML=sts.map(s=>`<button class="chip${filter===s?' sel':''}" data-f="${s}">${s}</button>`).join('');
+ $('filters').onclick=e=>{if(e.target.dataset.f){filter=e.target.dataset.f;renderList()}};
+ ensureGps();
+ const R=applyFilters();ORG=R.org;updateFBtn();
+ const bits=[];if(R.deal!=='All')bits.push(R.deal==='Rent'?'For rent':'For sale');if(R.max)bits.push('up to '+inr(R.max));if(R.min)bits.push('from '+inr(R.min));if(S.near)bits.push(`within ${S.rad} km of ${S.near.label}`);
+ $('hint').textContent=`${R.l.length} of ${entries.length} entries`+(bits.length?' · '+bits.join(' · '):'')+(S.near&&R.noLoc?` · ${R.noLoc} without a map location hidden`:'')+(!ORG&&entries.some(coordsOf)?' · Set My location in Settings to see distances':'');
+ $('listOut').innerHTML=R.l.length?R.l.map(card).join(''):`<div class="empty">${entries.length?'Nothing matches.':'No entries yet. Tap + to add one.'}</div>`;
+ bindCards($('listOut'));
+}
+$('q').oninput=renderList;
+
+/* ---------- distance, search & filters ---------- */
+const S={deal:'All',types:[],min:'',max:'',near:null,nearKey:'',rad:2,sort:'new'};
+let ORG=null,gps=null,gpsBusy=false,fTypeList=[],galItems=[],galMode='all',lbItems=[],lbIdx=0;
+const tried=new Set(),UA='Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36';
+function parseLL(s){
+ s=String(s||'').trim();if(!s)return null;
+ try{s=decodeURIComponent(s)}catch(e){}
+ const ok=(a,b)=>{a=+a;b=+b;return isFinite(a)&&isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180&&(a||b)?{lat:a,lng:b}:null};
+ const R=[/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/,/@(-?\d+\.\d+),(-?\d+\.\d+)/,/[?&](?:q|ll|query|destination|center|daddr|saddr)=(?:loc:)?\+?(-?\d+\.\d+)[,\s+]+(-?\d+\.\d+)/,/^geo:(-?\d+\.\d+),(-?\d+\.\d+)/,/\/place\/(-?\d+\.\d+),(-?\d+\.\d+)/,/^\s*(-?\d+\.\d+)\s*[, ]\s*(-?\d+\.\d+)\s*$/];
+ for(const r of R){const m=s.match(r);if(m){const v=ok(m[1],m[2]);if(v)return v}}
+ return null}
+const isShort=s=>/maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs|share\.google/i.test(s||'');
+const coordsOf=e=>e.lat!=null&&e.lng!=null?{lat:e.lat,lng:e.lng}:parseLL(e.map);
+const km=(a,b)=>{const r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dg=r(b.lng-a.lng),h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 12742*Math.asin(Math.sqrt(h))};
+const fkm=d=>d<.05?'<0.1 km':d<10?(Math.round(d*10)/10)+' km':Math.round(d)+' km';
+async function resolveUrl(u){const H=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.CapacitorHttp;if(!H||!navigator.onLine)return null;
+ try{const r=await H.get({url:u,headers:{'User-Agent':UA}});return parseLL(r.url)||parseLL(typeof r.data==='string'?r.data.slice(0,300000):'')}catch(e){return null}}
+async function resolveMaps(){if(!isNative())return;let ch=false;
+ for(const e of entries){if(e.lat!=null||!e.map||tried.has(e.id)||parseLL(e.map)||!isShort(e.map))continue;tried.add(e.id);
+  const ll=await resolveUrl(e.map);if(ll){e.lat=ll.lat;e.lng=ll.lng;try{await put('entries',e);ch=true}catch(x){}}}
+ if(ch&&cur==='list')renderList()}
+function getGps(){return new Promise(res=>{if(!navigator.geolocation)return res(null);
+ navigator.geolocation.getCurrentPosition(pos=>{gps={lat:pos.coords.latitude,lng:pos.coords.longitude,t:Date.now()};res(gps)},()=>res(null),{enableHighAccuracy:false,timeout:10000,maximumAge:120000})})}
+const homeLL=()=>cfg.live&&gps?gps:cfg.home;
+function ensureGps(){if(!cfg.live||gpsBusy||(gps&&Date.now()-gps.t<120000))return;gpsBusy=true;getGps().then(g=>{gpsBusy=false;if(g&&cur==='list')renderList()})}
+function distLine(e){if(!ORG)return'';const c=coordsOf(e);if(!c)return'';return `<div class="kv"><span class="dist">📍 ${fkm(km(ORG,c))} away</span>${S.near?` <span class="note">from ${esc(S.near.label)}</span>`:''}</div>`}
+function mapNote(){const v=$('map').value.trim(),n=$('mapNote');
+ n.textContent=!v?'':parseLL(v)?'📍 Location detected — distance will show on the card.':isShort(v)?'Short link: distance works once the app is online and can open it. Or tap Use my location.':'No coordinates found in this link, so no distance. Paste the full link or use Use my location.'}
+$('map').oninput=mapNote;
+
+const norm=s=>String(s||'').replace(/\s+/g,'').toLowerCase();
+function amt(s){s=String(s||'').toLowerCase().replace(/[₹,\s]/g,'');const m=s.match(/^(\d+(?:\.\d+)?)(k|l|lacs?|lakhs?|cr|crores?)?$/);if(!m)return null;const x=parseFloat(m[1]),u=m[2]||'';
+ return Math.round(u==='k'?x*1e3:u[0]==='l'?x*1e5:u[0]==='c'?x*1e7:x)}
+const STOP=['for','flat','flats','a','the','in','at','near'];
+function parseQ(raw){
+ let t=' '+raw.toLowerCase()+' ';const f={};
+ const grab=(re,fn)=>{const m=t.match(re);if(m&&fn(m)!==false)t=t.replace(re,' ')};
+ grab(/\b(rent|rental)\b/,()=>{f.deal='Rent'});
+ grab(/\b(sale|buy|sell)\b/,()=>{f.deal='Sale'});
+ const N='₹?\\s*([\\d.,]+\\s*(?:k|lacs?|lakhs?|crores?|cr|l)?)(?=\\s|$)';
+ grab(new RegExp('(?:\\b(?:under|below|till|until|upto|up to|max|maximum|less than|budget)|<=?)\\s*'+N),m=>{const v=amt(m[1]);if(!v)return false;f.max=v});
+ grab(new RegExp('(?:\\b(?:above|over|min|minimum|more than)|>=?)\\s*'+N),m=>{const v=amt(m[1]);if(!v)return false;f.min=v});
+ grab(/\b(\d)\s*(bhk|rk)\b/,m=>{f.type=m[1]+m[2]});
+ f.words=t.split(/\s+/).filter(w=>w&&!STOP.includes(w));return f}
+function applyFilters(){
+ const P=parseQ($('q').value.trim());
+ const deal=S.deal!=='All'?S.deal:(P.deal||'All');
+ const max=S.max?amt(S.max):P.max,min=S.min?amt(S.min):P.min;
+ const tn=S.types.length?S.types.map(norm):(P.type?[P.type]:[]);
+ const org=S.near||homeLL()||null;let noLoc=0;
+ const pr=e=>+(e.deal==='Rent'?e.rent:e.price)||0;
+ let l=entries.filter(e=>{
+  if(filter!=='All'&&e.status!==filter)return false;
+  if(deal!=='All'&&e.deal!==deal)return false;
+  if(tn.length&&!tn.includes(norm(e.ftype)))return false;
+  if(max||min){const v=pr(e);if(!v||(max&&v>max)||(min&&v<min))return false}
+  if(S.near){const c=coordsOf(e);if(!c){noLoc++;return false}if(km(S.near,c)>S.rad)return false}
+  if(P.words.length){const h=hay(e);if(!P.words.every(w=>h.includes(w)))return false}
+  return true});
+ const mode=S.sort==='new'&&S.near?'near':S.sort;
+ if(mode==='near')l=l.map(e=>{const c=org&&coordsOf(e);return[c?km(org,c):1e9,e]}).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+ else if(mode==='plow')l.sort((a,b)=>(pr(a)||1e15)-(pr(b)||1e15));
+ else if(mode==='phigh')l.sort((a,b)=>pr(b)-pr(a));
+ return{l,P,deal,max,min,org,noLoc}}
+function areaList(){const m={};entries.forEach(e=>{const a=(e.area||'').trim(),c=coordsOf(e);if(a&&c){const k=a.toLowerCase();(m[k]=m[k]||{n:a,p:[]}).p.push(c)}});return Object.values(m).sort((a,b)=>a.n.localeCompare(b.n))}
+function updateFBtn(){const n=(S.deal!=='All')+S.types.length+((S.min||S.max)?1:0)+(S.near?1:0);$('fToggle').textContent='Filters'+(n?` (${n})`:'')+' ▾'}
+function renderFPanel(){
+ const sel=c=>c?' sel':'';
+ $('fDeal').innerHTML=['All','Rent','Sale'].map(d=>`<button class="chip${sel(S.deal===d)}" data-deal="${d}">${d==='All'?'Rent & sale':d==='Rent'?'For rent':'For sale'}</button>`).join('');
+ fTypeList=[...new Set([...cfg.types,...entries.map(e=>e.ftype).filter(Boolean)])];
+ $('fType').innerHTML=fTypeList.map((t,i)=>`<button class="chip${sel(S.types.includes(t))}" data-ty="${i}">${esc(t)}</button>`).join('');
+ const Q=S.deal==='Sale'?['25L','50L','75L','1Cr','2Cr','3Cr']:['5k','10k','15k','20k','30k','50k'];
+ $('fBud').innerHTML=Q.map(q=>`<button class="chip${sel(S.max.toLowerCase()===q.toLowerCase())}" data-bq="${q}">up to ${q}</button>`).join('');
+ $('bMin').value=S.min;$('bMax').value=S.max;
+ const ar=areaList();
+ $('nearSel').innerHTML='<option value="">Anywhere</option><option value="me">My location</option>'+(ar.length?'<optgroup label="Areas you have saved">'+ar.map((a,i)=>`<option value="a:${i}">${esc(a.n)}</option>`).join('')+'</optgroup>':'')+'<option value="custom">Another place…</option>';
+ $('nearSel').value=S.nearKey;$('nearBox').hidden=S.nearKey!=='custom';$('radBox').hidden=!S.nearKey;
+ $('fRad').innerHTML=[1,2,3,5,10].map(r=>`<button class="chip${sel(S.rad===r)}" data-rad="${r}">${r} km</button>`).join('');
+ $('sort').value=S.sort;updateFBtn()}
+$('fToggle').onclick=()=>{$('fPanel').hidden=!$('fPanel').hidden;if(!$('fPanel').hidden)renderFPanel()};
+$('fPanel').onclick=ev=>{const d=ev.target.dataset;let ch=true;
+ if(d.deal)S.deal=d.deal;
+ else if(d.ty!=null){const t=fTypeList[+d.ty];S.types=S.types.includes(t)?S.types.filter(x=>x!==t):[...S.types,t]}
+ else if(d.bq)S.max=S.max.toLowerCase()===d.bq.toLowerCase()?'':d.bq;
+ else if(d.rad)S.rad=+d.rad;
+ else if(d.clear){Object.assign(S,{deal:'All',types:[],min:'',max:'',near:null,nearKey:'',rad:2,sort:'new'});filter='All';$('q').value=''}
+ else ch=false;
+ if(ch){renderFPanel();renderList()}};
+$('bMin').oninput=()=>{S.min=$('bMin').value.trim();renderList()};
+$('bMax').oninput=()=>{S.max=$('bMax').value.trim();renderList()};
+$('sort').onchange=()=>{S.sort=$('sort').value;renderList()};
+$('nearSel').onchange=async()=>{const v=$('nearSel').value;S.nearKey=v;$('nearBox').hidden=v!=='custom';$('radBox').hidden=!v;
+ if(!v)S.near=null;
+ else if(v==='me'){let g=homeLL();if(cfg.live||!g){toast('Getting your location…');g=(await getGps())||g}
+  if(!g){toast('Set My location in Settings or allow GPS');S.nearKey='';S.near=null;renderFPanel()}else S.near={lat:g.lat,lng:g.lng,label:'My location'}}
+ else if(v.startsWith('a:')){const a=areaList()[+v.slice(2)];if(a)S.near={lat:a.p.reduce((x,c)=>x+c.lat,0)/a.p.length,lng:a.p.reduce((x,c)=>x+c.lng,0)/a.p.length,label:a.n}}
+ renderList()};
+async function findPlace(q){
+ const ll=parseLL(q);if(ll)return{...ll,label:'Pinned location'};
+ if(isShort(q)){const r=await resolveUrl(q);return r?{...r,label:'Pinned location'}:null}
+ const h=cfg.home;let u='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q);
+ if(h)u+=`&viewbox=${h.lng-1},${h.lat+1},${h.lng+1},${h.lat-1}`;
+ const j=await (await fetch(u,{headers:{Accept:'application/json'}})).json();
+ return j[0]?{lat:+j[0].lat,lng:+j[0].lon,label:q}:null}
+$('nearGo').onclick=async()=>{const q=$('nearQ').value.trim();if(!q)return;toast('Looking up…');
+ try{const r=await findPlace(q);if(!r){toast('Could not find that place');return}S.near=r;renderList();toast('Showing flats near '+r.label)}catch(e){toast('Needs internet to look up a place name')}};
+
+/* ---------- lightbox, gallery, go-to-top ---------- */
+function lbUpd(i){lbIdx=i;const it=lbItems[i],e=it&&eById(it.eid);$('lbCnt').textContent=(i+1)+' / '+lbItems.length;
+ $('lbCap').textContent=e?plabel(e)+' · '+(e.deal==='Rent'?inr(e.rent):inr(e.price)):''}
+function openLb(items,i,gal){lbItems=items;const tr=$('lbTrack');
+ tr.innerHTML=items.map(it=>`<div class="slide"><img src="${it.src}" alt=""></div>`).join('');
+ $('lbGo').hidden=!gal;$('lbPrev').hidden=$('lbNext').hidden=items.length<2;
+ $('lb').style.display='flex';tr.scrollLeft=i*tr.clientWidth;lbUpd(i);sync()}
+$('lbTrack').onscroll=()=>{const t=$('lbTrack'),i=Math.round(t.scrollLeft/(t.clientWidth||1));if(i!==lbIdx&&lbItems[i])lbUpd(i)};
+$('lbPrev').onclick=()=>$('lbTrack').scrollBy({left:-$('lbTrack').clientWidth,behavior:'smooth'});
+$('lbNext').onclick=()=>$('lbTrack').scrollBy({left:$('lbTrack').clientWidth,behavior:'smooth'});
+$('lbX').onclick=()=>closeLb();
+$('lbGo').onclick=()=>{const it=lbItems[lbIdx];closeLb();if(it)showEntry(it.eid)};
+function showEntry(id){Object.assign(S,{deal:'All',types:[],min:'',max:'',near:null,nearKey:'',sort:'new'});filter='All';$('q').value='';go('list');
+ const el=document.querySelector(`#listOut .card[data-id="${id}"]`);
+ if(el){el.scrollIntoView({block:'start'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),2000)}}
+$('listOut').addEventListener('scroll',ev=>{const t=ev.target;if(t.classList&&t.classList.contains('car')){const c=t.parentNode.querySelector('.cnt');if(c)c.textContent=(Math.round(t.scrollLeft/(t.clientWidth||1))+1)+'/'+t.children.length}},true);
+function renderGal(){
+ $('galBar').innerHTML=[['all','All photos'],['cover','Covers only']].map(([k,t])=>`<button class="chip${galMode===k?' sel':''}" data-gm="${k}">${t}</button>`).join('');
+ galItems=[];entries.forEach(e=>(galMode==='cover'?e.pics.slice(0,1):e.pics).forEach(s=>galItems.push({src:s,eid:e.id})));
+ $('galOut').innerHTML=galItems.length?`<div class="gal">${galItems.map((it,i)=>`<div><img src="${it.src}" data-g="${i}" alt=""><i>${esc(plabel(eById(it.eid)))}</i></div>`).join('')}</div>`:'<div class="empty">No photos yet. Add photos to an entry and they show up here.</div>'}
+$('galBar').onclick=e=>{if(e.target.dataset.gm){galMode=e.target.dataset.gm;renderGal()}};
+$('galOut').onclick=e=>{if(e.target.dataset.g!=null)openLb(galItems,+e.target.dataset.g,true)};
+addEventListener('scroll',()=>{$('top').style.display=scrollY>500?'flex':'none'},{passive:true});
+$('top').onclick=()=>scrollTo({top:0,behavior:'smooth'});
+
+/* ---------- WhatsApp share ---------- */
+function shareText(e){
+ const sh=cfg.share,rent=e.deal==='Rent',T=String(e.ftype||'').toUpperCase(),flat=/BHK|RK/.test(T),city=(sh.city||'').trim();
+ let place=(e.area||e.apt||'').trim();if(place&&city&&!place.toLowerCase().includes(city.toLowerCase()))place+=', '+city;if(!place)place=city;
+ const d=[`${flat?'Spacious ':''}${e.ftype||'Property'}${flat?' Flat':''}${e.apt&&e.area?' – '+e.apt:''}`];
+ if(sh.price!==false){if(rent&&e.rent)d.push('Rent: '+inr(e.rent)+' per month');if(!rent&&e.price)d.push('Price: '+inr(e.price))}
+ if(rent&&+e.deposit){const n=+e.deposit/+e.rent;d.push(+e.rent&&Number.isInteger(n)?`${n} Month${n>1?'s’':'’s'} Deposit`:'Deposit: '+inr(e.deposit))}
+ if(!rent&&(e.carpet||e.builtup))d.push([e.carpet?'Carpet '+e.carpet+' sq ft':'',e.builtup?'Built-up '+e.builtup+' sq ft':''].filter(Boolean).join(' • '));
+ if(e.amen&&e.amen.length)d.push('Amenities: '+e.amen.join(', '));
+ String(sh.extra||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>d.push(x));
+ const who=sh.who==='mine'&&(sh.myName||sh.myMob)?{n:sh.myName,m:sh.myMob}:{n:e.name,m:e.mobile};
+ const B=[`🏡 ${flat?T+' SPACIOUS FLAT':(T||'PROPERTY')} AVAILABLE FOR ${rent?'RENT':'SALE'}`];
+ if(place)B.push(`📍 ${place}`);
+ if(sh.tag)B.push(sh.tag);
+ B.push('🏠 PROPERTY DETAILS\n\n'+d.map(x=>'✅ '+x).join('\n'));
+ if(place)B.push('📍 Location: '+place);
+ B.push('📞 FOR DETAILS & SITE VISIT');
+ B.push([who.n,who.m?'📱 '+who.m:'','📲 Call or WhatsApp for Details'].filter(Boolean).join('\n'));
+ B.push('🏡 Interested? Contact Now for More Information!');
+ return B.join('\n\n')}
+function openShare(e){
+ const txt=shareText(e),wa=t=>'https://wa.me/?text='+encodeURIComponent(t);
+ modal(`<h3>Share on WhatsApp</h3><textarea id="shT" rows="14" style="font-size:14px">${esc(txt)}</textarea><div class="acts" style="margin-top:12px"><a class="btn" id="shWa" target="_blank" rel="noopener" href="${wa(txt)}">WhatsApp</a>${isNative()&&e.pics.length?'<button class="btn alt" id="shPic">With photos</button>':''}<button class="btn alt" id="shCopy">Copy</button><button class="btn alt" id="mNo">Close</button></div>`);
+ $('mNo').onclick=closeModal;
+ $('shT').oninput=()=>$('shWa').href=wa($('shT').value);
+ $('shCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('shT').value)}catch(x){$('shT').select();document.execCommand('copy')}toast('Copied')};
+ if($('shPic'))$('shPic').onclick=async()=>{try{const FS=Capacitor.Plugins.Filesystem,files=[];
+  for(let i=0;i<Math.min(e.pics.length,8);i++)files.push((await FS.writeFile({path:`share_${Date.now()}_${i}.jpg`,data:e.pics[i].split(',')[1],directory:'CACHE'})).uri);
+  await Capacitor.Plugins.Share.share({text:$('shT').value,files,dialogTitle:'Share property'})}catch(x){toast('Could not share photos: '+(x.message||x))}}}
+
+/* ---------- settings ---------- */
+function chips(box,arr,kind){$(box).innerHTML=arr.map((x,i)=>`<span class="chip">${esc(x)}<button data-k="${kind}" data-i="${i}" aria-label="Remove">×</button></span>`).join('')||'<span class="note">None yet</span>'}
+function renderSettings(){chips('fieldChips',cfg.fields,'fields');chips('typeChips',cfg.types,'types');chips('amListChips',cfg.amenities,'amenities');$('auto').checked=cfg.auto;
+ $('menuList').innerHTML=cfg.menu.map((k,i)=>`<div class="card" style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1">${titles[k]}</span><button class="btn sm alt" data-mv="${i}" data-d="-1" ${i?'':'disabled'}>↑</button><button class="btn sm alt" data-mv="${i}" data-d="1" ${i<cfg.menu.length-1?'':'disabled'}>↓</button></div>`).join('');
+ $('theme').value=cfg.theme==='classic'?'light':cfg.theme;settingsExtra();
+ const base=folder===null?'Checking…':folder||'Not available: phone storage blocked the folder';const tgt=n=>folder?folder+'/'+n:base;
+ $('where').innerHTML=isNative()?`<p><b>Entries, settings and photos shown in the app:</b> kept in the app's private storage on this phone. A file manager can't see it. It stays when you install an update, and is deleted if you uninstall or clear storage.</p><p><b>Photo folders:</b><br>${esc(paths.photos||(folder?folder+'/photos/':base))}<br>One folder per property, named Location - Apartment - Type - Deal - ID, with 1.jpg, 2.jpg inside.</p><p><b>Excel file:</b><br>${esc(paths.xl||tgt('broker-entries.xlsx'))}<br>Saved straight to this folder (no share screen). Open Files → Documents → BrokerBook.</p><p><b>Full backup file (with photos):</b><br>${esc(paths.bk||tgt('broker-backup.json'))}${cfg.lastBackup?'<br>Last backup: '+new Date(cfg.lastBackup).toLocaleString('en-IN'):''}</p>`:'<p>Entries and photos are stored in this browser on this device. Excel files go to your Downloads folder.</p>'
+ $('xlInfo').textContent=cfg.lastExport?'Last Excel file: '+new Date(cfg.lastExport).toLocaleString('en-IN'):'No Excel file downloaded yet.'}
+$('p-settings').onclick=async e=>{const mv=e.target.dataset.mv;
+ if(mv!=null){const i=+mv,j=i+ +e.target.dataset.d;[cfg.menu[i],cfg.menu[j]]=[cfg.menu[j],cfg.menu[i]];await saveCfg();renderSettings();renderMenu();return}
+ const k=e.target.dataset.k;if(!k)return;
+ if(confirm(`Remove "${cfg[k][e.target.dataset.i]}"? Saved entries keep their data.`)){cfg[k].splice(e.target.dataset.i,1);await saveCfg();renderSettings();fillTypes();fillCustom();renderAm()}};
+$('addField').onclick=async()=>{const v=$('newField').value.trim();if(!v)return;if(!cfg.fields.includes(v))cfg.fields.push(v);$('newField').value='';await saveCfg();renderSettings();fillCustom()};
+$('addType').onclick=async()=>{const v=$('newType').value.trim();if(!v)return;if(!cfg.types.includes(v))cfg.types.push(v);$('newType').value='';await saveCfg();renderSettings();fillTypes()};
+$('auto').onchange=async()=>{cfg.auto=$('auto').checked;await saveCfg();updateStatus()};
+$('xlNow').onclick=()=>exportXlsx(false);
+
+/* ---------- Excel export ---------- */
+function rows(){
+ const keys=[...new Set([...cfg.fields,...entries.flatMap(e=>Object.keys(e.custom||{}))])];
+ return entries.map(e=>{const r={'ID':e.id,'Date':new Date(e.created).toLocaleDateString('en-IN'),'Name':e.name,'Mobile':e.mobile,'Rent/Sale':e.deal,'Flat type':e.ftype,
+  'Monthly rent':e.rent,'Deposit':e.deposit,'Sale price':e.price,'Location':e.area,'Carpet area':e.carpet,'Built-up area':e.builtup,'Amenities':(e.amen||[]).join(', '),'Apartment':e.apt,'Map link':e.map,'Status':e.status,'Photos':e.pics.length};
+  keys.forEach(k=>r[k]=(e.custom||{})[k]||'');return r})}
+let folder=null,paths={xl:'',photos:''};
+const dec=u=>decodeURIComponent(u).replace(/^file:\/\//,'');
+async function nativeWrite(path,data,enc){
+ const FS=Capacitor.Plugins.Filesystem,why=[];
+ for(const directory of ['DOCUMENTS','EXTERNAL']){
+  try{return (await FS.writeFile({path,data,directory,recursive:true,...(enc?{encoding:enc}:{})})).uri}catch(e){why.push(directory+': '+(e&&e.message||e))}
+ }
+ throw new Error(why.join(' | '))
+}
+async function nativeRm(path,dir){const FS=Capacitor.Plugins.Filesystem;
+ for(const directory of ['DOCUMENTS','EXTERNAL'])try{dir?await FS.rmdir({path,directory,recursive:true}):await FS.deleteFile({path,directory})}catch(e){}}
+async function initFolder(){
+ if(!isNative()){folder='';return}
+ try{folder=dec(await nativeWrite('BrokerBook/README.txt',btoa('Broker Book saves broker-entries.xlsx and a photos folder here.'))).replace(/\/README\.txt$/,'')}catch(e){folder=''}
+}
+const safe=x=>String(x||'').replace(/[\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim();
+const folderFor=e=>[safe(e.area),safe(e.apt),safe(e.ftype),e.deal,e.id.slice(-4)].filter(Boolean).join(' - ').slice(0,90).trim();
+async function savePhotos(e,oldN){
+ const base=`BrokerBook/photos/${e.folder}/`;
+ for(let i=0;i<e.pics.length;i++){try{const u=await nativeWrite(base+(i+1)+'.jpg',e.pics[i].split(',')[1]);paths.photos=dec(u.slice(0,u.indexOf('/photos/')+8))}catch(x){}}
+ for(let i=e.pics.length;i<(oldN||0);i++)await nativeRm(base+(i+1)+'.jpg');
+}
+async function migratePhotos(){
+ if(!isNative())return;
+ for(const e of entries){if(!e.pics.length||e.folder)continue;
+  e.folder=folderFor(e);await savePhotos(e,0);
+  for(let i=1;i<=e.pics.length;i++)await nativeRm(`BrokerBook/photos/${e.id}_${i}.jpg`);
+  await put('entries',e)}
+}
+async function saveXlsx(wb,silent){
+ if(!isNative()){XLSX.writeFile(wb,'broker-entries.xlsx');return}
+ const uri=await nativeWrite('BrokerBook/broker-entries.xlsx',XLSX.write(wb,{type:'base64',bookType:'xlsx'}));
+ paths.xl=dec(uri);
+}
+async function exportXlsx(silent){
+ if(!entries.length){if(!silent)toast('No entries to export');return}
+ const d=new Date().toISOString().slice(0,10);
+ try{
+  if(window.XLSX){const ws=XLSX.utils.json_to_sheet(rows()),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Entries');
+  if(customers.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(customers.map(c=>({Name:c.name,Mobile:c.mobile,'Looking for':c.want,Notes:c.notes}))),'Customers');
+  if(interests.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(interests.map(i=>{const c=cById(i.cid)||{};return{Customer:c.name,Mobile:c.mobile,Property:plabel(eById(i.eid)),Stage:i.stage,'Next call':when(i.next),History:i.hist.map(h=>when(loc(new Date(h.t)))+' '+h.txt).join(' | ')}})),'Interests');await saveXlsx(wb,silent)}
+  else{const r=rows(),h=Object.keys(r[0]),csv=[h,...r.map(o=>h.map(k=>o[k]))].map(a=>a.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='broker-entries.csv';a.click();
+   if(!silent)toast('Excel library not loaded (offline). Saved as CSV instead.')}
+  cfg.lastExport=Date.now();saveCfg();updateStatus();if(!silent){toast(isNative()?'Excel saved to '+paths.xl:'Excel downloaded',7000);renderSettings()}
+ }catch(x){toast('Export failed: '+x.message)}
+}
+
+/* ---------- connectivity pill ---------- */
+function updateStatus(){
+ const on=navigator.onLine,s=$('status');
+ s.textContent=`● ${on?'Online':'Offline'}`;
+ s.title='Entries are stored on this phone. Tap to download Excel.';
+}
+$('status').onclick=()=>exportXlsx(false);
+addEventListener('online',updateStatus);addEventListener('offline',updateStatus);
+
+/* ---------- customers, interests, follow-ups ---------- */
+const STAGES=['New','Called','Visit planned','Visited','Negotiating','Closed','Lost'];
+const OPEN=s=>s!=='Closed'&&s!=='Lost';
+let customers=[],interests=[],cur='list';
+const cById=id=>customers.find(c=>c.id===id),eById=id=>entries.find(e=>e.id===id);
+const plabel=e=>e?[e.apt||e.area||'Property',e.ftype,e.deal].filter(Boolean).join(' · '):'(deleted property)';
+const pad=n=>String(n).padStart(2,'0');
+const loc=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const inDays=n=>{const d=new Date();d.setDate(d.getDate()+n);d.setHours(10,0,0,0);return loc(d)};
+const when=s=>s?new Date(s).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+const last10=m=>String(m||'').replace(/\D/g,'').slice(-10);
+const waLink=m=>{const d=String(m||'').replace(/\D/g,'');return d?'https://wa.me/'+(d.length===10?'91'+d:d):''};
+const put=(st,o)=>p(tx(st,'readwrite').put(o));
+const modal=h=>{$('sheet').innerHTML=h;$('modal').style.display='flex';sync()};
+const closeModal=()=>{$('modal').style.display='none';sync()};
+$('modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+$('sheet').onclick=ev=>{const t=ev.target;
+ if(t.dataset.q!==undefined)$('mNext').value=t.dataset.q===''?'':inDays(+t.dataset.q);
+ if(t.dataset.open)openInt(t.dataset.open)};
+const stageSel=v=>`<select id="mStage">${STAGES.map(s=>`<option${s===v?' selected':''}>${s}</option>`).join('')}</select>`;
+const QUICK='<div class="acts"><button type="button" class="btn sm alt" data-q="1">Tomorrow</button><button type="button" class="btn sm alt" data-q="3">3 days</button><button type="button" class="btn sm alt" data-q="7">Next week</button><button type="button" class="btn sm alt" data-q="">No reminder</button></div>';
+const BTNS='<div class="acts" style="margin-top:14px"><button class="btn" id="mOk">Save</button><button class="btn alt" id="mNo">Cancel</button>';
+const intLine=e=>{const l=interests.filter(i=>i.eid===e.id);return l.length?`<div class="kv"><span>Interested:</span> ${l.map(i=>esc((cById(i.cid)||{}).name||'?')+' ('+i.stage+')').join(', ')}</div>`:''};
+function dueN(){const end=new Date();end.setHours(23,59,59,999);return interests.filter(i=>i.next&&OPEN(i.stage)&&new Date(i.next)<=end).length}
+
+async function sched(i){
+ if(!isNative())return;const LN=Capacitor.Plugins.LocalNotifications;if(!LN)return;
+ const id=Number(i.id.replace(/\D/g,'').slice(-9));
+ try{await LN.cancel({notifications:[{id}]});
+  if(!i.next||!OPEN(i.stage)||new Date(i.next)<=new Date())return;
+  const pm=await LN.requestPermissions();if(pm.display!=='granted')return;
+  const c=cById(i.cid);
+  await LN.schedule({notifications:[{id,title:'Call '+(c?c.name||c.mobile:'customer'),body:plabel(eById(i.eid))+(c&&c.mobile?' · '+c.mobile:''),schedule:{at:new Date(i.next),allowWhileIdle:true}}]})
+ }catch(e){}
+}
+async function afterInterest(i){
+ if(i.stage==='Closed'){const e=eById(i.eid);
+  if(e&&e.status==='Available'&&confirm(`Mark this property as ${e.deal==='Rent'?'Rented':'Sold'}?`)){e.status=e.deal==='Rent'?'Rented':'Sold';e.updated=Date.now();await put('entries',e)}}
+ await load();refresh();sched(i);updateStatus();
+}
+function openCust(c){c=c||{};
+ modal(`<h3>${c.id?'Edit':'New'} customer</h3><label>Name</label><input id="cN" value="${esc(c.name)}"><label>Mobile</label><input id="cM" type="tel" value="${esc(c.mobile)}"><label>Looking for</label><input id="cW" placeholder="e.g. 2 BHK rent, 20k, Baner" value="${esc(c.want)}"><label>Notes</label><input id="cT" value="${esc(c.notes)}">${BTNS}</div>`);
+ $('mNo').onclick=closeModal;
+ $('mOk').onclick=async()=>{const n=$('cN').value.trim(),m=$('cM').value.trim();
+  if(!n&&!m){toast('Enter a name or mobile');return}
+  const dup=customers.find(x=>x.id!==c.id&&m&&last10(x.mobile)===last10(m));
+  if(dup&&!confirm(`${dup.name||dup.mobile} already has this number. Save anyway?`))return;
+  await put('customers',{...c,id:c.id||'c'+Date.now(),created:c.created||Date.now(),name:n,mobile:m,want:$('cW').value.trim(),notes:$('cT').value.trim()});
+  closeModal();await load();refresh();toast('Customer saved')};
+}
+function openLink(o){
+ const ps=entries.filter(e=>e.status!=='Sold'&&e.status!=='Rented');
+ const ex=o.eid?interests.filter(i=>i.eid===o.eid).map(i=>`<button class="chip" style="border:0" data-open="${i.id}">${esc((cById(i.cid)||{}).name||'?')} · ${i.stage}${i.next&&OPEN(i.stage)?' · '+when(i.next):''}</button>`).join(''):'';
+ const cu=o.eid?`<label>Customer</label><select id="lC"><option value="">+ New customer</option>${customers.map(c=>`<option value="${c.id}">${esc(c.name||c.mobile)} ${esc(c.mobile)}</option>`).join('')}</select><div id="newC"><label>Name</label><input id="lN"><label>Mobile</label><input id="lM" type="tel"></div>`:'';
+ const pr=o.cid?`<label>Property</label><select id="lP">${ps.map(e=>`<option value="${e.id}">${esc(plabel(e))}</option>`).join('')}</select>`:'';
+ modal(`<h3>${o.eid?'Interested customer':'Link a property'}</h3>${ex?`<div class="note">Already interested (tap to update)</div><div class="chips">${ex}</div>`:''}${cu}${pr}<label>Stage</label>${stageSel('New')}<label>Call back</label><input id="mNext" type="datetime-local" value="${inDays(1)}">${QUICK}<label>Note</label><input id="mNote">${BTNS.replace('Save','Link')}</div>`);
+ if(o.eid)$('lC').onchange=()=>{$('newC').style.display=$('lC').value?'none':''};
+ $('mNo').onclick=closeModal;
+ $('mOk').onclick=async()=>{
+  const eid=o.eid||($('lP')&&$('lP').value);if(!eid){toast('No available property to link');return}
+  let cid=o.cid;
+  if(o.eid){cid=$('lC').value;
+   if(!cid){const n=$('lN').value.trim(),m=$('lM').value.trim();if(!n&&!m){toast('Enter customer name or mobile');return}
+    let c=customers.find(x=>m&&last10(x.mobile)===last10(m));
+    if(c){if(!confirm(`${c.name||c.mobile} already has this number. Use that customer?`))return}
+    else{c={id:'c'+Date.now(),created:Date.now(),name:n,mobile:m,want:'',notes:''};await put('customers',c)}
+    cid=c.id}}
+  if(interests.some(i=>i.eid===eid&&i.cid===cid)){toast('Already linked');return}
+  const now=Date.now(),nt=$('mNote').value.trim(),st=$('mStage').value;
+  const i={id:'i'+now,cid,eid,stage:st,next:$('mNext').value,hist:[{t:now,txt:'Linked · '+st+(nt?' · '+nt:'')}],updated:now};
+  await put('interests',i);closeModal();await load();await afterInterest(i);toast('Linked')};
+}
+function openInt(id,head){
+ const i=interests.find(x=>x.id===id);if(!i)return;const c=cById(i.cid),e=eById(i.eid);
+ modal(`<h3>${esc(head||(c?c.name||c.mobile:'Customer'))}</h3><div class="note">${esc(plabel(e))}${c&&c.mobile?' · '+esc(c.mobile):''}</div><label>Stage</label>${stageSel(i.stage)}<label>Call back</label><input id="mNext" type="datetime-local" value="${esc(i.next)}">${QUICK}<label>Add note</label><input id="mNote" placeholder="What was discussed?"><div class="note" style="margin-top:10px"><b>History</b></div>${[...i.hist].reverse().map(h=>`<div class="kv"><span>${when(loc(new Date(h.t)))}</span> ${esc(h.txt)}</div>`).join('')}${BTNS}<button class="btn red" id="mDel">Unlink</button></div>`);
+ $('mNo').onclick=closeModal;
+ $('mOk').onclick=async()=>{const s=$('mStage').value,n=$('mNote').value.trim();
+  if(s!==i.stage)i.hist.push({t:Date.now(),txt:`Stage: ${i.stage} → ${s}`});
+  if(n)i.hist.push({t:Date.now(),txt:n});
+  Object.assign(i,{stage:s,next:$('mNext').value,updated:Date.now()});
+  await put('interests',i);closeModal();await afterInterest(i);toast('Saved')};
+ $('mDel').onclick=async()=>{if(!confirm('Remove this link?'))return;
+  await p(tx('interests','readwrite').delete(i.id));closeModal();sched({...i,next:''});await load();refresh()};
+}
+function renderCust(){
+ const q=$('cq').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+ const l=customers.filter(c=>{const h=[c.name,c.mobile,c.want,c.notes].join(' ').toLowerCase();return q.every(w=>h.includes(w))});
+ $('custOut').innerHTML=l.length?l.map(c=>{const its=interests.filter(i=>i.cid===c.id);
+  return `<div class="card" data-id="${c.id}"><h3>${esc(c.name||'(no name)')}</h3><div class="meta">${esc(c.mobile)}</div>${c.want?`<div class="kv"><span>Looking for:</span> ${esc(c.want)}</div>`:''}${c.notes?`<div class="kv">${esc(c.notes)}</div>`:''}${its.length?`<div class="chips">${its.map(i=>`<button class="chip" style="border:0" data-a="int" data-i="${i.id}">${esc(plabel(eById(i.eid)))} · ${i.stage}${i.next&&OPEN(i.stage)?' · '+when(i.next):''}</button>`).join('')}</div>`:''}<div class="acts">${c.mobile?`<a class="btn sm" href="tel:${esc(c.mobile)}">Call</a>`:''}${waLink(c.mobile)?`<a class="btn sm alt" href="${waLink(c.mobile)}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm alt" data-a="link">Link property</button><button class="btn sm alt" data-a="cedit">Edit</button><button class="btn sm red" data-a="cdel">Delete</button></div></div>`}).join(''):`<div class="empty">${customers.length?'Nothing matches.':'No customers yet. Tap + to add one, or tap Interested on a property.'}</div>`;
+}
+$('cq').oninput=renderCust;
+$('custOut').onclick=async ev=>{const a=ev.target.dataset.a;if(!a)return;const card=ev.target.closest('.card'),c=card&&cById(card.dataset.id);
+ if(a==='int')openInt(ev.target.dataset.i);
+ if(a==='link')openLink({cid:c.id});
+ if(a==='cedit')openCust(c);
+ if(a==='cdel'&&confirm('Delete this customer and their links?')){
+  for(const i of interests.filter(x=>x.cid===c.id)){await p(tx('interests','readwrite').delete(i.id));sched({...i,next:''})}
+  await p(tx('customers','readwrite').delete(c.id));await load();refresh()}};
+function fuRow(i){const c=cById(i.cid)||{};
+ return `<div class="card" data-i="${i.id}"><h3>${esc(c.name||c.mobile)}</h3><div class="meta">${esc(plabel(eById(i.eid)))} · ${i.stage}</div><div class="price">${when(i.next)}</div>${i.hist.length?`<div class="kv">${esc(i.hist[i.hist.length-1].txt)}</div>`:''}<div class="acts">${c.mobile?`<a class="btn sm" href="tel:${esc(c.mobile)}" data-a="fcall">Call</a>`:''}${waLink(c.mobile)?`<a class="btn sm alt" href="${waLink(c.mobile)}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm alt" data-a="fopen">Update</button></div></div>`}
+function renderFu(){
+ const now=new Date(),end=new Date();end.setHours(23,59,59,999);
+ const l=interests.filter(i=>i.next&&OPEN(i.stage)).sort((a,b)=>a.next<b.next?-1:1);
+ const g=[['Overdue',l.filter(i=>new Date(i.next)<now)],['Today',l.filter(i=>{const d=new Date(i.next);return d>=now&&d<=end})],['Upcoming',l.filter(i=>new Date(i.next)>end)]];
+ $('fuOut').innerHTML=l.length?g.filter(x=>x[1].length).map(([t,a])=>`<h3 style="margin:14px 0 6px;${t==='Overdue'?'color:var(--red)':''}">${t} (${a.length})</h3>`+a.map(fuRow).join('')).join(''):'<div class="empty">No call-backs set. Tap Interested on a property and pick a call-back time.</div>';
+}
+$('fuOut').onclick=ev=>{const a=ev.target.dataset.a,card=ev.target.closest('.card');if(!card)return;
+ if(a==='fopen')openInt(card.dataset.i);
+ if(a==='fcall')setTimeout(()=>openInt(card.dataset.i,'How did the call go?'),700)};
+
+/* ---------- restore from Excel ---------- */
+$('xlRestore').onclick=()=>$('xlFile').click();
+$('xlFile').onchange=async()=>{
+ const f=$('xlFile').files[0];$('xlFile').value='';if(!f)return;
+ if(!window.XLSX){toast('Excel library not loaded. Go online once and retry.');return}
+ try{
+  const wb=XLSX.read(await f.arrayBuffer()),rs=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+  if(!rs.length){toast('No rows found in the file');return}
+  if(!confirm(`Restore ${rs.length} entries? Matching entries are updated, new ones are added.`))return;
+  const fixed=['ID','Date','Name','Mobile','Rent/Sale','Flat type','Monthly rent','Deposit','Sale price','Area','Location','Carpet area','Built-up area','Amenities','Apartment','Map link','Status','Photos'];
+  const key=e=>[e.mobile,e.name,e.apt,e.area].join('|').toLowerCase();
+  let add=0,upd=0;
+  for(let i=0;i<rs.length;i++){
+   const r=rs[i],cust={};
+   Object.keys(r).forEach(k=>{if(!fixed.includes(k)){cust[k]=String(r[k]);if(!cfg.fields.includes(k))cfg.fields.push(k)}});
+   const e={name:String(r.Name),mobile:String(r.Mobile),deal:r['Rent/Sale']==='Sale'?'Sale':'Rent',ftype:String(r['Flat type']),rent:String(r['Monthly rent']),deposit:String(r.Deposit),price:String(r['Sale price']),area:String(r.Location||r.Area||''),carpet:String(r['Carpet area']||''),builtup:String(r['Built-up area']||''),amen:String(r.Amenities||'').split(',').map(x=>x.trim()).filter(Boolean),apt:String(r.Apartment),map:String(r['Map link']),status:String(r.Status)||'Available',custom:cust};
+   if(e.ftype&&!cfg.types.includes(e.ftype))cfg.types.push(e.ftype);
+   e.amen.forEach(a=>{if(!cfg.amenities.includes(a))cfg.amenities.push(a)});
+   const old=entries.find(x=>r.ID?x.id===String(r.ID):key(x)===key(e));
+   Object.assign(e,{id:old?old.id:(r.ID?String(r.ID):'e'+Date.now()+'r'+i),created:old?old.created:Date.now(),updated:Date.now()-i,pics:old?old.pics:[],folder:old&&old.folder});
+   await p(tx('entries','readwrite').put(e));old?upd++:add++;
+  }
+  await saveCfg();await load();updateStatus();renderSettings();fillTypes();fillCustom();
+  toast(`Restored: ${add} added, ${upd} updated`);
+ }catch(x){toast('Restore failed: '+x.message)}
+};
+
+/* ---------- location + theme ---------- */
+$('locBtn').onclick=()=>{
+ if(!navigator.geolocation){toast('Location not supported on this browser');return}
+ const b=$('locBtn');b.textContent='Locating…';
+ navigator.geolocation.getCurrentPosition(pos=>{
+  $('map').value=`https://www.google.com/maps?q=${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`;
+  b.textContent='Use my location';mapNote();toast('Location added')},
+ err=>{b.textContent='Use my location';toast(err.code===1?'Allow location permission and try again':'Could not get location')},
+ {enableHighAccuracy:true,timeout:15000})};
+function applyTheme(){if(cfg.theme==='sleek'||cfg.theme==='classic')cfg.theme='light';let t=cfg.theme;
+ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+ const d={light:'sleek',dark:'sleekdark'}[t]||'sleek';
+ document.documentElement.dataset.theme=d;try{localStorage.setItem('bb-theme',d)}catch(e){}}
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>cfg.theme==='auto'&&applyTheme());
+$('theme').onchange=async()=>{cfg.theme=$('theme').value;await saveCfg();applyTheme()};
+
+/* ---------- Android back button + swipe from left edge ---------- */
+let guardOn=false,silentPop=false,tx0=0,ty0=0,tmode='';
+const lbOpen=()=>$('lb').style.display==='flex',modalOpen=()=>$('modal').style.display==='flex',drawerOpen=()=>$('drawer').classList.contains('open');
+const closable=()=>lbOpen()||modalOpen()||drawerOpen()||cur!=='list';
+/* one history entry exists while anything closable is showing, so Back closes it instead of leaving the app */
+function sync(){const need=closable();
+ if(need&&!guardOn){history.pushState({bb:1},'');guardOn=true}
+ else if(!need&&guardOn){guardOn=false;silentPop=true;history.back()}}
+function openDrawer(){$('drawer').classList.add('open');$('shade').classList.add('open');sync()}
+function closeDrawer(){$('drawer').classList.remove('open');$('shade').classList.remove('open');sync()}
+function closeLb(){$('lb').style.display='none';sync()}
+addEventListener('popstate',()=>{if(silentPop){silentPop=false;return}
+ guardOn=false;
+ if(lbOpen())closeLb();else if(modalOpen())closeModal();else if(drawerOpen())closeDrawer();else if(cur!=='list')go('list');
+ sync()});
+addEventListener('touchstart',e=>{const t=e.touches[0];tx0=t.clientX;ty0=t.clientY;
+ tmode=drawerOpen()?'close':(tx0<=28&&!lbOpen()&&!modalOpen()?'open':'')},{passive:true});
+addEventListener('touchmove',e=>{if(!tmode)return;const t=e.touches[0],dx=t.clientX-tx0,dy=Math.abs(t.clientY-ty0);
+ if(tmode==='open'&&dx>45&&dy<35){tmode='';openDrawer()}
+ else if(tmode==='close'&&dx<-45&&dy<35){tmode='';closeDrawer()}},{passive:true});
+
+/* ---------- extra settings: location, colours, share, backup ---------- */
+const ZC={blue:'59,91,253',teal:'15,92,82',amber:'217,119,6',rose:'225,29,72',violet:'124,58,237'};
+function applyZebra(){document.body.classList.toggle('zebra',!!cfg.zebra);document.documentElement.style.setProperty('--zc',ZC[cfg.zcol]||ZC.blue)}
+function settingsExtra(){const h=cfg.home,s=cfg.share;
+ $('homeNow').textContent=h?`Saved: ${h.lat.toFixed(5)}, ${h.lng.toFixed(5)}`:'Not set yet. Distances need this (or live GPS).';
+ $('liveGps').checked=!!cfg.live;$('zebra').checked=!!cfg.zebra;$('zcol').value=cfg.zcol;
+ $('shCity').value=s.city;$('shTag').value=s.tag;$('shExtra').value=s.extra;$('shWho').value=s.who;$('shName').value=s.myName;$('shMob').value=s.myMob;$('shPrice').checked=s.price!==false;$('shMine').hidden=s.who!=='mine'}
+$('homeGps').onclick=async()=>{toast('Getting location…');const g=await getGps();if(!g){toast('Allow location permission and try again');return}cfg.home={lat:g.lat,lng:g.lng};await saveCfg();settingsExtra();toast('My location saved')};
+$('homeSet').onclick=async()=>{const q=$('homeIn').value.trim();if(!q)return;let ll=parseLL(q);if(!ll&&isShort(q)){toast('Opening link…');ll=await resolveUrl(q)}
+ if(!ll){toast('Could not read a location from that');return}cfg.home=ll;await saveCfg();$('homeIn').value='';settingsExtra();toast('My location saved')};
+$('liveGps').onchange=async()=>{cfg.live=$('liveGps').checked;await saveCfg();if(cfg.live)getGps()};
+$('zebra').onchange=async()=>{cfg.zebra=$('zebra').checked;await saveCfg();applyZebra()};
+$('zcol').onchange=async()=>{cfg.zcol=$('zcol').value;await saveCfg();applyZebra()};
+[['shCity','city'],['shTag','tag'],['shExtra','extra'],['shName','myName'],['shMob','myMob']].forEach(([id,k])=>$(id).oninput=()=>{cfg.share[k]=$(id).value;saveCfg()});
+$('shWho').onchange=()=>{cfg.share.who=$('shWho').value;$('shMine').hidden=cfg.share.who!=='mine';saveCfg()};
+$('shPrice').onchange=()=>{cfg.share.price=$('shPrice').checked;saveCfg()};
+$('bkNow').onclick=async()=>{try{const data=JSON.stringify({v:1,t:Date.now(),entries,customers,interests,cfg});
+ if(isNative()){const uri=await nativeWrite('BrokerBook/broker-backup.json',data,'utf8');paths.bk=dec(uri);cfg.lastBackup=Date.now();await saveCfg();renderSettings();toast('Backup saved to '+paths.bk,7000)}
+ else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='broker-backup.json';a.click()}}catch(x){toast('Backup failed: '+x.message)}};
+$('bkRestore').onclick=()=>$('bkFile').click();
+$('bkFile').onchange=async()=>{const f=$('bkFile').files[0];$('bkFile').value='';if(!f)return;
+ try{const b=JSON.parse(await f.text());if(!b.entries)throw new Error('Not a Broker Book backup');
+  if(!confirm(`Restore ${b.entries.length} entries and ${(b.customers||[]).length} customers? Matching ones are overwritten.`))return;
+  for(const e of b.entries)await put('entries',e);for(const c of b.customers||[])await put('customers',c);for(const i of b.interests||[])await put('interests',i);
+  const bc=b.cfg||{};['fields','types','amenities'].forEach(k=>(bc[k]||[]).forEach(x=>{if(!cfg[k].includes(x))cfg[k].push(x)}));if(!cfg.home&&bc.home)cfg.home=bc.home;
+  await saveCfg();await load();interests.forEach(sched);refresh();renderSettings();toast('Backup restored')}catch(x){toast('Restore failed: '+x.message)}};
+
+/* ---------- init ---------- */
+(async()=>{
+ try{await open();const c=await p(tx('cfg').get('cfg'));if(c)cfg=Object.assign(cfg,c);cfg.share=Object.assign({...DEF_SHARE},cfg.share);
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+  await load();initFolder().then(migratePhotos);interests.forEach(sched);resolveMaps()}catch(x){toast('Storage unavailable: '+x.message)}
+ const hadGal=cfg.menu.includes('gal');
+ cfg.menu=[...cfg.menu.filter(k=>titles[k]),...Object.keys(titles).filter(k=>!cfg.menu.includes(k))];
+ if(!hadGal){cfg.menu=cfg.menu.filter(k=>k!=='gal');cfg.menu.splice(cfg.menu.indexOf('list')+1,0,'gal');saveCfg().catch(()=>{})}
+ applyTheme();applyZebra();resetForm();updateStatus();go('list');renderMenu();
+})();
+</script>
+</body>
+</html>

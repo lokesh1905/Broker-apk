@@ -27,7 +27,7 @@ jobs:
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
       - name: Add camera and location permissions
         run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>#' android/app/src/main/AndroidManifest.xml
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4

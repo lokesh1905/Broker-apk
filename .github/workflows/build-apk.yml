@@ -45,6 +45,78 @@ jobs:
       - name: Add camera, location, notification and fingerprint permissions
         run: |
           sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.USE_BIOMETRIC"/><uses-permission android:name="android.permission.USE_FINGERPRINT"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>#' android/app/src/main/AndroidManifest.xml
+      - name: Add the Share-app plugin (shares the installed APK only, never the data)
+        run: |
+          PKG=android/app/src/main/java/com/lokesh/brokerbook2
+          test -f $PKG/MainActivity.java
+          # the share sheet needs Capacitor's FileProvider and a cache-path entry; fail the build if the template ever changes
+          grep -q 'fileprovider' android/app/src/main/AndroidManifest.xml
+          grep -q 'cache-path' android/app/src/main/res/xml/file_paths.xml
+          cat > $PKG/ApkSharePlugin.java <<'JAVA'
+          package com.lokesh.brokerbook2;
+
+          import android.content.Context;
+          import android.content.Intent;
+          import android.net.Uri;
+          import androidx.core.content.FileProvider;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          import java.io.File;
+          import java.io.FileInputStream;
+          import java.io.FileOutputStream;
+          import java.io.InputStream;
+          import java.io.OutputStream;
+
+          @CapacitorPlugin(name = "ApkShare")
+          public class ApkSharePlugin extends Plugin {
+              @PluginMethod
+              public void share(PluginCall call) {
+                  try {
+                      Context ctx = getContext();
+                      File src = new File(ctx.getPackageCodePath());
+                      File dir = new File(ctx.getCacheDir(), "apk");
+                      if (!dir.exists() && !dir.mkdirs()) {
+                          call.reject("Could not create the cache folder");
+                          return;
+                      }
+                      File out = new File(dir, "BrokerBook.apk");
+                      try (InputStream in = new FileInputStream(src); OutputStream os = new FileOutputStream(out)) {
+                          byte[] buf = new byte[65536];
+                          int n;
+                          while ((n = in.read(buf)) > 0) os.write(buf, 0, n);
+                      }
+                      Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".fileprovider", out);
+                      Intent send = new Intent(Intent.ACTION_SEND);
+                      send.setType("application/vnd.android.package-archive");
+                      send.putExtra(Intent.EXTRA_STREAM, uri);
+                      send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      Intent chooser = Intent.createChooser(send, "Share Broker Book app");
+                      chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      getActivity().startActivity(chooser);
+                      call.resolve();
+                  } catch (Exception e) {
+                      call.reject("Could not share the app: " + e.getMessage());
+                  }
+              }
+          }
+          JAVA
+          cat > $PKG/MainActivity.java <<'JAVA'
+          package com.lokesh.brokerbook2;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(ApkSharePlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          JAVA
+          grep -q 'registerPlugin(ApkSharePlugin.class)' $PKG/MainActivity.java
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - name: Verify the APK is signed with debug.keystore (fails the build if not)

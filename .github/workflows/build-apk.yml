@@ -18,6 +18,10 @@ jobs:
           cp index.html www/index.html
           curl -fL -o www/xlsx.js https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
           sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js#xlsx.js#' www/index.html
+          curl -fL -o www/leaflet.js https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js
+          curl -fL -o www/leaflet.css https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css
+          sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js#leaflet.js#; s#https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css#leaflet.css#' www/index.html
+          grep -q 'src="leaflet.js"' www/index.html
       - run: npm install
       - run: npx cap add android
       - name: Sign with the committed key and raise the version
@@ -38,9 +42,9 @@ jobs:
           GRADLE
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
           grep -q "versionCode ${{ github.run_number }}" android/app/build.gradle
-      - name: Add camera, location and notification permissions
+      - name: Add camera, location, notification and fingerprint permissions
         run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.USE_BIOMETRIC"/><uses-permission android:name="android.permission.USE_FINGERPRINT"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>#' android/app/src/main/AndroidManifest.xml
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - name: Verify the APK is signed with debug.keystore (fails the build if not)

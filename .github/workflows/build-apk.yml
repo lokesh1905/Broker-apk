@@ -51,12 +51,12 @@ jobs:
       - name: Add camera, location, notification and fingerprint permissions
         run: |
           sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.USE_BIOMETRIC"/><uses-permission android:name="android.permission.USE_FINGERPRINT"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.READ_CONTACTS"/><uses-permission android:name="android.permission.WRITE_CONTACTS"/><uses-permission android:name="android.permission.INTERNET"/><uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>#' android/app/src/main/AndroidManifest.xml
-      - name: Let Broker Book open shared flat files (.bbk) from WhatsApp and the share sheet
+      - name: Let Broker Book open shared flat files from WhatsApp and the share sheet
         run: |
           M=android/app/src/main/AndroidManifest.xml
           test "$(grep -c '</activity>' $M)" = "1"
-          sed -i 's#</activity>#<intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><data android:scheme="content"/><data android:scheme="file"/><data android:mimeType="application/octet-stream"/></intent-filter><intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="application/octet-stream"/></intent-filter></activity>#' $M
-          grep -q 'application/octet-stream' $M
+          sed -i 's#</activity>#<intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><data android:scheme="content"/><data android:scheme="file"/><data android:mimeType="application/octet-stream"/><data android:mimeType="application/json"/></intent-filter><intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="application/octet-stream"/><data android:mimeType="application/json"/></intent-filter></activity>#' $M
+          grep -q 'application/json' $M
       - name: Add the Share-app plugin (shares the installed APK only, never the data)
         run: |
           PKG=android/app/src/main/java/com/lokesh/brokerbook2
@@ -165,3 +165,4 @@ jobs:
         with:
           name: broker-book-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
